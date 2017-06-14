@@ -4,14 +4,18 @@ const socket = require('socket.io-client')('http://10.42.0.1:8080')
 
 // sensors
 const dht = require('node-dht-sensor');
-const raspiSensors = require('raspi-sensors');
+const RaspiSensors = require('raspi-sensors');
 const TSL2561 = new RaspiSensors.Sensor({
 	type    : "TSL2561",
 	address : 0X39
 }, "light_sensor");
 
-const getDht = Rx.Observable.create(function (observer) {
+console.log(dht, TSL2561);
+
+const getDht = () => $.create(function (observer) {
+    console.log('getting dht');
     dht.read(22, 17, function(err, temperature, humidity) {
+        console.log(err, temperature, humidity);
         observer.onNext({
           humidity,
           temperature
@@ -25,8 +29,11 @@ const getDht = Rx.Observable.create(function (observer) {
 });
 
 
-const getTs = Rx.Observable.create(function (observer) {
+const getTs = () => $.create(function (observer) {
+  console.log('getting ts');
+
   TSL2561.fetch((err, data) => {
+      console.log(err, data);
       observer.onNext({
         luminocity: data.value
       });
@@ -57,24 +64,21 @@ const getData = () => {
   }
 }*/
 
-const getData = () => $.merge(
-  getDht(),
-  getTs()
-).reduce((o, d) => Object.assign({},o,d), {});
+const getData = () => $.merge(getDht(),getTs()).reduce((o, d) => Object.assign({},o,d), {});
 
 socket.on('connect', function() {
-	console.log("connected");
+  console.log("connected");
   socket.emit('join', 'pi');
-
-  socket.on('joined', res => {
-    $.interval(5000)
-  		.timeInterval()
-      .flatMap(getData)
+  socket.on('joinSuccess', res => {
+    console.log('joined');
+    $.interval(300)
+      .timeInterval()
       .subscribe(data => {
-        socket.emit('message', {
-          username: 'pi',
-          message: data
-        });
+        getData().subscribe(data =>
+          socket.emit('message', {
+            username: 'pi',
+            message: data
+          }));
         console.log(data);
       });
   });
