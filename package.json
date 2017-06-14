@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "node-dht-sensor": "0.0.32",
-    "raspi-sensors": "^0.2.11"
+    "raspi-sensors": "^0.2.11",
+    "rx": "^4.1.0",
+    "socket.io-client": "^2.0.3"
   }
 }
